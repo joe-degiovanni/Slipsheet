@@ -4,6 +4,8 @@ nbproject/
 build/
 .cvsignore
 .gitignore
+logs/
+slipsheet.cfg
 
 # Windows image file caches
 Thumbs.db
