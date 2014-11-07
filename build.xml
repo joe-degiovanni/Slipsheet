@@ -59,6 +59,8 @@
                             mainClass="${javafx.main.class}"/>
             <fx:resources>
                 <fx:fileset dir="${basedir}/${dist.dir}" includes="*.jar"/>
+                <fx:fileset dir="${basedir}/${dist.dir}" includes="lib/*.jar"/>
+                <fx:fileset dir="${basedir}/${dist.dir}" includes="src/log4j2.xml"/>
             </fx:resources>
             <fx:info title="${application.title}" vendor="${application.vendor}"/>
         </fx:deploy>

@@ -23,10 +23,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -34,7 +35,8 @@ import java.util.logging.Logger;
  */
 public class Slipsheeter {
     
-    File historicalSet, currentSet, newDocumentSet, stampPDF, bbScriptEngine;
+    private final File historicalSet, currentSet, newDocumentSet, stampPDF, bbScriptEngine;
+    private final Logger logger = Logger.getRootLogger();
     
     public Slipsheeter(File historicalSet, File currentSet, File newDocumentSet, File stampPDF) throws InstantiationException{
         this.historicalSet = historicalSet;
@@ -44,6 +46,7 @@ public class Slipsheeter {
         this.bbScriptEngine = locateBlueBeamScriptEngine();
         if (bbScriptEngine==null) throw new InstantiationException("unable to find Bluebeam Revu installation");
     }
+    
     
     private File locateBlueBeamScriptEngine(){
         String[] defaultLocations = {
@@ -58,10 +61,9 @@ public class Slipsheeter {
     }
     
     public void start(){
-        System.out.println("Starting process...");
-               
+        logger.info("Starting process...");
         slipsheetDirectory(newDocumentSet,historicalSet,currentSet,true);
-        
+        logger.info("Slipsheet process finished");
     }
     
     private void slipsheetDirectory(File newDocDir, File historicalDocDir, File currentDocDir, boolean recursive){
@@ -70,20 +72,21 @@ public class Slipsheeter {
         File[] newDocuments = newDocDir.listFiles(pff);
         File[] historicalDocuments = historicalDocDir.listFiles(pff);
         
-        for(File newFile:newDocuments){
-            System.out.println("Processing new file "+ newFile.getName() + "... ");
-            
-            if(containsFileName(historicalDocuments,newFile)){
-                System.out.println("Found a match in historical documents... kick off bluebeam slipsheet script");
-                File histTarget = new File(historicalDocDir.getAbsolutePath()+"\\"+newFile.getName());
-                File currTarget = new File(currentDocDir.getAbsolutePath()+"\\"+newFile.getName());
-                slipsheetSingleFile(newFile,histTarget,currTarget);
-            } else {
-                System.out.println("No matches found. Adding new document to historical set.");
-                copyFile(newFile,historicalDocDir);
-                copyFile(newFile,currentDocDir);
+        if(newDocuments!=null){
+            for(File newFile:newDocuments){
+                logger.info("Processing new file "+ newFile.getName() + "... ");
+                if(containsFileName(historicalDocuments,newFile)){
+                    logger.info("Found a match in historical documents... kick off bluebeam slipsheet script");
+                    File histTarget = new File(historicalDocDir.getAbsolutePath()+"\\"+newFile.getName());
+                    File currTarget = new File(currentDocDir.getAbsolutePath()+"\\"+newFile.getName());
+                    slipsheetSingleFile(newFile,histTarget,currTarget);
+                } else {
+                    logger.info("No matches found. Adding new document to historical set and current set.");
+                    copyFile(newFile,historicalDocDir);
+                    copyFile(newFile,currentDocDir);
+                }
+
             }
-            
         }
         
         if(recursive==true){
@@ -108,10 +111,14 @@ public class Slipsheeter {
             writer.println("Close()");
             writer.close();
             
+            logger.debug(Files.readAllLines(Paths.get("slipsheeter3000script.bci"), StandardCharsets.UTF_8));
+            
             // execute bluebeam script
             executeBlueBeamScript("slipsheeter3000script.bci");
         } catch (FileNotFoundException | UnsupportedEncodingException ex) {
-            Logger.getLogger(Slipsheeter.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error("unable to complete slipsheeting: "+ex);
+        } catch (IOException ex) {
+            logger.error("error while running slipsheeting process: "+ex);
         }
     }
     
@@ -127,18 +134,19 @@ public class Slipsheeter {
 
             // Read command standard output
             String s;
-            System.out.println("Standard output: ");
+            logger.debug("Standard output: ");
             while ((s = stdInput.readLine()) != null) {
-                System.out.println(s);
+                logger.debug(s);
             }
 
             // Read command errors
-            System.out.println("Standard error: ");
+            logger.debug("Standard error: ");
             while ((s = stdError.readLine()) != null) {
-                System.out.println(s);
+                logger.error(s);
             }
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error(e.getMessage());
+            logger.error(e.getStackTrace().toString());
         }
     }
     
@@ -148,7 +156,7 @@ public class Slipsheeter {
             //dest.createNewFile();
             Files.copy(file.toPath(), dest.toPath(),StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException ioe) {
-            System.err.println(ioe.getMessage());
+            logger.error(ioe.getMessage());
         }
     }
     
@@ -162,6 +170,7 @@ public class Slipsheeter {
     private void slipsheetSubDirectories(File newDocDir, File historicalDocDir, File currentDocDir) {
         DirectoryFileFilter dff = new DirectoryFileFilter();
         File[] newSubDirectories = newDocDir.listFiles(dff);
+        if(newSubDirectories==null) return;
         for(File newSubDir:newSubDirectories){
             
             File histSubDir = new File(historicalDocDir.getAbsolutePath()+"\\"+newSubDir.getName());
