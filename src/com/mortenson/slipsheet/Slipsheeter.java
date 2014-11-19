@@ -96,6 +96,14 @@ public class Slipsheeter {
     
     private void slipsheetSingleFile(File latest, File historical, File current){
         File temp = new File(historical.getParentFile().getAbsolutePath() + "temp.pdf");
+        if (!FileHelper.isFileWritable(current)) {
+            logger.error("Unable to write to current set file. Skipping slipsheeting...");
+            return;
+        }
+        if (!FileHelper.isFileWritable(historical)) {
+            logger.error("Unable to write to historical set file. Skipping slipsheeting...");
+            return;
+        }
         try (PrintWriter writer = new PrintWriter("slipsheeter3000script.bci", "UTF-8")) {
             writer.println("Open(\""+historical.getAbsolutePath()+"\")");
             writer.println("Unflatten()");

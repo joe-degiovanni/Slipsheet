@@ -97,6 +97,7 @@ public class Slipsheet extends Application {
         column1.setHalignment(HPos.LEFT);
         ColumnConstraints column2 = new ColumnConstraints();
         column2.setHalignment(HPos.RIGHT);
+        column2.setMinWidth(150);
 
         Text scenetitle = new Text("Bluebeam Auto Slipsheeting");
         scenetitle.setId("welcome-text");
@@ -107,18 +108,21 @@ public class Slipsheet extends Application {
 
         // historical set
         Text historicalSetText = new Text(config.getDefaultHistoricalSet());
+        historicalSetText.setWrappingWidth(600);
         grid.add(historicalSetText, 2, 2);
         Button historicalSetButton = generateChooserButton("Select historical set...", historicalSetText);
         grid.add(historicalSetButton, 1, 2);
 
         // current set
         Text currentSetText = new Text(config.getDefaultCurrentSet());
+        currentSetText.setWrappingWidth(600);
         grid.add(currentSetText, 2, 3);
         Button currentSetButton = generateChooserButton("Select current set...", currentSetText);
         grid.add(currentSetButton, 1, 3);
 
         // new document set
         Text newDocumentSetText = new Text(config.getDefaultNewDocSet());
+        newDocumentSetText.setWrappingWidth(600);
         grid.add(newDocumentSetText, 2, 4);
         Button newDocSetButton = generateChooserButton("Select new document set...", newDocumentSetText);
         grid.add(newDocSetButton, 1, 4);
